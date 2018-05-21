@@ -106,8 +106,8 @@ sim_mindthief <- function(modifier_deck, attack_deck = c(2,2), augment, ally=0, 
 
 
 ### test numeric cards
-sim_mindthief(modifier_deck = base_modifier_deck, augment = mt_augments[[1]], ally = 1)
+#sim_mindthief(modifier_deck = base_modifier_deck, augment = mt_augments[[1]], ally = 1)
 
 ### test string cards
-sim_mindthief(modifier_deck = "miss", augment = mt_augments[[1]], ally = 1)
+#sim_mindthief(modifier_deck = "miss", augment = mt_augments[[1]], ally = 1)
 

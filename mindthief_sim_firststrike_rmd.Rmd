@@ -1,0 +1,77 @@
+---
+title: "Mindthief Augment Simulation, First Round Damage: TMW vs WC"
+output: 
+    html_document:
+    keep_md: yes
+---
+
+## Question
+
+* Gloomhaven Mindthief (MT) class guides almost unanimously recommend using the augment card "The Mind's Weakness" (TMW) over all other augments for the majority of combat situations
+* The primary reason: TMW's +2 damage for every melee attack means "monsters are dying faster, causing less damage to the MT and other party members"
+* I wanted to explore to what extent this communal wisdom broke down, if at all, through simple simulations because:
+    1. The game seems to be well balanced, how could the design come up so short with this particular character's cards?
+    2. There must be certain sitations where augments other than TMW are "more optimal"
+* For this very simple simulation, "more optimal" means 'the augment card that leads to more damage in a single round of combat'
+
+## Setup
+* Simulation Assumptions
+    * The Mindthief attacks first for every iteration of the simulation
+    * This is only the first round of combat
+    * I do not simulate:
+        * time to kill (ttk), the number of actions or number of rounds it takes to kill a hypothetical monster
+        * a "full round" of combat, the amount of damage the party does PLUS the damage monsters deal (i.e. this would be a more realistic way of simulating how Withering Claw's muddle effect might reduce incoming damage)
+
+* The following variables were considered in this simulation:
+    * Mindthief level 1 card attack values = [2,3,1,3,1,2,1,1]
+    * Base Attack Modifier Deck = [0, 0, 0, 0, 0,0, 1,1,1,1,1,-1,-1,-1,-1,-1, 2, -2, "2x", "miss"]
+    * Two Augment Cards = The Mind's Weakness (TMW) and Withering Claw (WC)
+    * Allies = accounts for damage dealt by other party members, ranges from 0 (no party members adding damage) to 3 (all party members attacking the same monster)
+        * For now, we very simply assume an ally adds +2 damage to the monster with no deck modifiers
+
+* The damage model is thus:
+    * total first round damage = `R(MT attack card) + R(attack modifier) + (augment_card) + (ally_damage)`
+    * My notation `R(variable)` indicates that the variable is a single random value drawn from the "pool" of character or attack modifier cards
+    * If `augment_card` = "Withering Claw", `(ally_damage)` = 2 + 1 (+1, from poison) _for each ally's attack_
+    * If `augment_card` = "The Mind's Weakness", `(ally_damage)` = 2
+      
+
+```{r warning = FALSE, message=FALSE, echo=FALSE}
+## mindthief_sims
+mindthief_attack_deck = c(2,3,1,3,1,2,1,1)
+## 
+base_modifier_deck <- c(0, 0, 0, 0, 0,0, 1,1,1,1,1,-1,-1,-1,-1,-1, 2, -2, "2x", "miss")
+
+## 2. set augment
+mt_augments <- list(minds_weakness = list(attack = 2, debuff = "", buff = ""), 
+                    withering_claw = list(attack = 0, debuff = "poison, muddle", buff = ""),
+                    feedback_loop = list(attack = 0, debuff = "", buff = "+1 shield"))
+
+
+source("function_mindthief.R")
+
+minds_weakness_sim1 = replicate(1000, expr = sim_mindthief(modifier_deck = base_modifier_deck, attack_deck = mindthief_attack_deck, augment = mt_augments[[1]], ally = 1))
+
+minds_weakness_sim0 = replicate(1000, expr = sim_mindthief(modifier_deck = base_modifier_deck, attack_deck = mindthief_attack_deck, augment = mt_augments[[1]], ally = 0))
+
+withering_claw_sim1 = replicate(1000, expr = sim_mindthief(modifier_deck = base_modifier_deck, attack_deck = mindthief_attack_deck, augment = mt_augments[[2]], ally = 1))
+
+withering_claw_sim0 = replicate(1000, expr = sim_mindthief(modifier_deck = base_modifier_deck, attack_deck = mindthief_attack_deck, augment = mt_augments[[2]], ally = 0))
+
+minds_weakness_sim2 = replicate(1000, expr = sim_mindthief(modifier_deck = base_modifier_deck, attack_deck = mindthief_attack_deck, augment = mt_augments[[1]], ally = 2))
+
+withering_claw_sim2 = replicate(1000, expr = sim_mindthief(modifier_deck = base_modifier_deck, attack_deck = mindthief_attack_deck, augment = mt_augments[[2]], ally = 2))
+
+par(mfrow=c(3,2))
+
+max_label = max(minds_weakness_sim1, minds_weakness_sim0, withering_claw_sim1, withering_claw_sim0, withering_claw_sim2, minds_weakness_sim2)
+
+hist(minds_weakness_sim2, main = paste("TMW, ally = 2;",mean(minds_weakness_sim2)), xlim = c(0, max_label))
+hist(withering_claw_sim2, main = paste("WC, ally = 2;",mean(withering_claw_sim2)), xlim = c(0, max_label))
+hist(minds_weakness_sim1, main = paste("TMW, ally = 1;", mean(minds_weakness_sim1)), xlim = c(0, max_label))
+hist(withering_claw_sim1, main = paste("WC, ally = 1;",mean(withering_claw_sim1)), xlim = c(0, max_label))
+hist(minds_weakness_sim0, main = paste("TMW, ally = 0;",mean(minds_weakness_sim0)), xlim = c(0, max_label))
+hist(withering_claw_sim0, main = paste("WC, ally = 0;",mean(withering_claw_sim0)), xlim = c(0, max_label))
+
+
+```
