@@ -7,11 +7,24 @@ output: rmarkdown::github_document
 
 * Gloomhaven Mindthief (MT) class guides almost unanimously recommend using the augment card "The Mind's Weakness" (TMW) over all other augments for the majority of combat situations
 * The primary reason: TMW's +2 damage for every melee attack means "monsters are dying faster, causing less damage to the MT and other party members"
+* The alternative damage oriented augment is "Withering Claw" (WC), which adds a poison and muddle effect to each enemy the Mindthief hits with melee
+    * Poison = creature receives 1 additional damage for each attack, __does not go away after a creature's turn__
+    * Muddle = creature must attack with Disadvantage, this _does_ go away after a creature's turn
+    * Poison can be valuable for taking down shielded enemies
+    * Muddle can be useful on hard hitting/high damage monsters
 * I wanted to explore to what extent this communal wisdom broke down, if at all, through simple simulations because:
     1. The game seems to be well balanced, how could the design come up so short when it comes to the utility of other augment cards?
     2. There must be certain sitations where augments other than TMW are "more optimal" to deploy
-* For this very simple simulation, **"more optimal" means 'the augment card that leads to more damage in a single round of combat'**
+* For this very simple simulation, **"more optimal" means 'the augment card that leads to more damage in a single round of combat'**. 
+* __We do not consider possible damage mitigation from Withering Claw's "muddle" effect__, which is an important "defensive" feature of Withering Claw
 
+### Graph Interpretation 
+
+* The following graphs are a histogram of the simulation results
+* Each simulation is a round of combat with 0 - 3 allies present (that aid in damage dealt to a single creature)
+* The x-axis is thus total damage dealt by the Mindthief + Party
+* The red line is a visual reference point for the mean damage output for a type of simulation 
+    * The numeric value of the red line is also shown in the plot's title
 
 ```{r warning = FALSE, message=FALSE, echo=FALSE}
 ## mindthief_sims
@@ -39,17 +52,42 @@ minds_weakness_sim2 = replicate(1000, expr = sim_mindthief(modifier_deck = base_
 
 withering_claw_sim2 = replicate(1000, expr = sim_mindthief(modifier_deck = base_modifier_deck, attack_deck = mindthief_attack_deck, augment = mt_augments[[2]], ally = 2))
 
-par(mfrow=c(3,2))
+withering_claw_sim3 = replicate(1000, expr = sim_mindthief(modifier_deck = base_modifier_deck, attack_deck = mindthief_attack_deck, augment = mt_augments[[2]], ally = 3))
+
+minds_weakness_sim3 = replicate(1000, expr = sim_mindthief(modifier_deck = base_modifier_deck, attack_deck = mindthief_attack_deck, augment = mt_augments[[1]], ally = 3))
+
+
+par(mfrow=c(2,2))
 
 max_label = max(minds_weakness_sim1, minds_weakness_sim0, withering_claw_sim1, withering_claw_sim0, withering_claw_sim2, minds_weakness_sim2)
 
-hist(minds_weakness_sim2, main = paste("TMW, ally = 2;",mean(minds_weakness_sim2)), xlim = c(0, max_label))
-hist(withering_claw_sim2, main = paste("WC, ally = 2;",mean(withering_claw_sim2)), xlim = c(0, max_label))
-hist(minds_weakness_sim1, main = paste("TMW, ally = 1;", mean(minds_weakness_sim1)), xlim = c(0, max_label))
-hist(withering_claw_sim1, main = paste("WC, ally = 1;",mean(withering_claw_sim1)), xlim = c(0, max_label))
-hist(minds_weakness_sim0, main = paste("TMW, ally = 0;",mean(minds_weakness_sim0)), xlim = c(0, max_label))
-hist(withering_claw_sim0, main = paste("WC, ally = 0;",mean(withering_claw_sim0)), xlim = c(0, max_label))
+hist(minds_weakness_sim3, main = paste("TMW, allies = 3;",mean(minds_weakness_sim3)), xlim = c(0, max_label)); abline(v=mean(minds_weakness_sim3),col='red')
+
+hist(withering_claw_sim3, main = paste("WC, allies = 3;",mean(withering_claw_sim3)), xlim = c(0, max_label)); abline(v=mean(withering_claw_sim3),col='red')
+
+hist(minds_weakness_sim2, main = paste("TMW, allies = 2;",mean(minds_weakness_sim2)), xlim = c(0, max_label)); abline(v=mean(minds_weakness_sim2),col='red')
+
+hist(withering_claw_sim2, main = paste("WC, allies = 2;",mean(withering_claw_sim2)), xlim = c(0, max_label)); abline(v=mean(withering_claw_sim2),col='red')
+
+hist(minds_weakness_sim1, main = paste("TMW, allies = 1;", mean(minds_weakness_sim1)), xlim = c(0, max_label)); abline(v=mean(minds_weakness_sim1),col='red')
+
+hist(withering_claw_sim1, main = paste("WC, allies = 1;",mean(withering_claw_sim1)), xlim = c(0, max_label)); abline(v=mean(withering_claw_sim1),col='red')
+
+hist(minds_weakness_sim0, main = paste("TMW, allies = 0;",mean(minds_weakness_sim0)), xlim = c(0, max_label)); abline(v=mean(minds_weakness_sim0),col='red')
+
+hist(withering_claw_sim0, main = paste("WC, allies = 0;",mean(withering_claw_sim0)), xlim = c(0, max_label));abline(v=mean(withering_claw_sim0),col='red')
+
 ```
+
+## Takeaways
+
+* The Mind's Weakness outperforms Withering Claw by adding at least 1 additional point of damage up until at least 2 allies are hitting the same creature
+* With 2-3 players hitting the same creature, Withering claw's damage equals TMW at 2 players, and exceeds TMW's damage at 3 players
+* The utility of WC with 2-3 players focusing on a creature becomes more attractive when you consider damage mitigation from Muddle
+    * WC can be particularly useful in "crowd control" situations (e.g. many enemies doing damage at once) if the Mindthief can place two attacks down in a single round on separate creatures (there are a couple MT bottom attack cards)
+* Unfortunately, WC's total utility may be offset when taking on higher level bosses that are immune to most negative effects. 
+* Augment choice can thus be very party and scenario dependent
+    
 
 ## Setup
 

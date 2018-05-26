@@ -55,7 +55,26 @@ sim_mindthief <- function(modifier_deck, attack_deck = c(2,2), augment, ally=0, 
                     sample(x = ally_attack, size = 1) + 
                     ifelse(grepl(x = augment$debuff, pattern = "poison"), 1, 0)
                 
+                return(damage)
+            } else if (card == "miss"){
+                ## MISS
+                damage = 0
                 #print(paste(damage, "ally=", ally, "ally_attack=", ally_attack, "aug_debuff =",augment$debuff, "aug_attack=", augment$attack))
+                return(damage)
+            }
+        } else if (ally == 3){
+            if (card == "2x"){
+                ## DOUBLE
+                damage = (2 * ((sample(x = attack_deck, size = 1) + augment$attack))) + 
+                    sample(x = ally_attack, size = 1) + 
+                    ifelse(grepl(x = augment$debuff, pattern = "poison"), 1, 0) + 
+                    ## second ally attack
+                    sample(x = ally_attack, size = 1) + 
+                    ifelse(grepl(x = augment$debuff, pattern = "poison"), 1, 0) + 
+                    ## second ally attack
+                    sample(x = ally_attack, size = 1) + 
+                    ifelse(grepl(x = augment$debuff, pattern = "poison"), 1, 0)
+                
                 return(damage)
             } else if (card == "miss"){
                 ## MISS
@@ -93,6 +112,21 @@ sim_mindthief <- function(modifier_deck, attack_deck = c(2,2), augment, ally=0, 
                 augment$attack + 
                 sample(x = ally_attack, size = 1) + 
                 ifelse(grepl(x = augment$debuff, pattern = "poison"), 1, 0) +    
+                ## second ally attack
+                sample(x = ally_attack, size = 1) + 
+                ifelse(grepl(x = augment$debuff, pattern = "poison"), 1, 0) 
+            
+            #print(paste(damage, "ally=", ally, "ally_attack=", ally_attack, "aug_debuff =",augment$debuff, "aug_attack=", augment$attack))
+            return(damage)
+        } else if (ally == 3){
+            damage = as.integer(card) + 
+                sample(x = attack_deck, size = 1) + 
+                augment$attack + 
+                sample(x = ally_attack, size = 1) + 
+                ifelse(grepl(x = augment$debuff, pattern = "poison"), 1, 0) +    
+                ## second ally attack
+                sample(x = ally_attack, size = 1) + 
+                ifelse(grepl(x = augment$debuff, pattern = "poison"), 1, 0) +
                 ## second ally attack
                 sample(x = ally_attack, size = 1) + 
                 ifelse(grepl(x = augment$debuff, pattern = "poison"), 1, 0) 

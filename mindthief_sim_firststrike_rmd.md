@@ -6,12 +6,36 @@ Question
 
 -   Gloomhaven Mindthief (MT) class guides almost unanimously recommend using the augment card "The Mind's Weakness" (TMW) over all other augments for the majority of combat situations
 -   The primary reason: TMW's +2 damage for every melee attack means "monsters are dying faster, causing less damage to the MT and other party members"
+-   The alternative damage oriented augment is "Withering Claw" (WC), which adds a poison and muddle effect to each enemy the Mindthief hits with melee
+    -   Poison = creature receives 1 additional damage for each attack, **does not go away after a creature's turn**
+    -   Muddle = creature must attack with Disadvantage, this *does* go away after a creature's turn
+    -   Poison can be valuable for taking down shielded enemies
+    -   Muddle can be useful on hard hitting/high damage monsters
 -   I wanted to explore to what extent this communal wisdom broke down, if at all, through simple simulations because:
     1.  The game seems to be well balanced, how could the design come up so short when it comes to the utility of other augment cards?
     2.  There must be certain sitations where augments other than TMW are "more optimal" to deploy
--   For this very simple simulation, **"more optimal" means 'the augment card that leads to more damage in a single round of combat'**
+-   For this very simple simulation, **"more optimal" means 'the augment card that leads to more damage in a single round of combat'**.
+-   **We do not consider possible damage mitigation from Withering Claw's "muddle" effect**, which is an important "defensive" feature of Withering Claw
 
-![](mindthief_sim_firststrike_rmd_files/figure-markdown_github/unnamed-chunk-1-1.png)
+### Graph Interpretation
+
+-   The following graphs are a histogram of the simulation results
+-   Each simulation is a round of combat with 0 - 3 allies present (that aid in damage dealt to a single creature)
+-   The x-axis is thus total damage dealt by the Mindthief + Party
+-   The red line is a visual reference point for the mean damage output for a type of simulation
+    -   The numeric value of the red line is also shown in the plot's title
+
+![](mindthief_sim_firststrike_rmd_files/figure-markdown_github/unnamed-chunk-1-1.png)![](mindthief_sim_firststrike_rmd_files/figure-markdown_github/unnamed-chunk-1-2.png)
+
+Takeaways
+---------
+
+-   The Mind's Weakness outperforms Withering Claw by adding at least 1 additional point of damage up until at least 2 allies are hitting the same creature
+-   With 2-3 players hitting the same creature, Withering claw's damage equals TMW at 2 players, and exceeds TMW's damage at 3 players
+-   The utility of WC with 2-3 players focusing on a creature becomes more attractive when you consider damage mitigation from Muddle
+    -   WC can be particularly useful in "crowd control" situations (e.g. many enemies doing damage at once) if the Mindthief can place two attacks down in a single round on separate creatures (there are a couple MT bottom attack cards)
+-   Unfortunately, WC's total utility may be offset when taking on higher level bosses that are immune to most negative effects.
+-   Augment choice can thus be very party and scenario dependent
 
 Setup
 -----
