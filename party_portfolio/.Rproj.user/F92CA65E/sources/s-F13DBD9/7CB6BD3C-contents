@@ -1,0 +1,17 @@
+library(plyr)
+library(dplyr)
+
+
+card_stats <- read.csv("card_stats.csv")
+
+my_party <- c("Mindthief", "Tinkerer", "Brute")
+
+data <- dplyr::filter(card_stats, Class %in% my_party, level < 6)
+
+## summarize total attack, attack_target + attack_hex, range, debuffs, movement
+
+stats <- plyr::ddply(data, ~Class, summarize, 
+                     avg_attack = mean(Attack),
+                     total_attack_aoe = (Attack_Hexs + Attack_Targets),
+                     total_debuff = sum(ifelse(debuff_type != "", 1, 0))
+                     )

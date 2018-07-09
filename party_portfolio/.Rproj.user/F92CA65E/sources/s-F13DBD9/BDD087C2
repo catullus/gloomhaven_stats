@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1530978084306.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "BDD087C2",
+    "lastKnownWriteTime" : 1531081153,
+    "last_content_update" : 1531081153140,
+    "path" : "~/Documents/GitHub/gloomhaven_stats/party_portfolio/my_party_portfolio.R",
+    "project_path" : "my_party_portfolio.R",
+    "properties" : {
+        "cursorPosition" : "31,0",
+        "scrollLine" : "13",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

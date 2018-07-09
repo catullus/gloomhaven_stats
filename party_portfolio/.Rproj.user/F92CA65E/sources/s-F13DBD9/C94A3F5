@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1530978652001.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "C94A3F5",
+    "lastKnownWriteTime" : 1510947866,
+    "last_content_update" : 1510947866,
+    "path" : "~/Documents/R_Projects/ff/P1_cur_teamstats.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "79,70",
+        "scrollLine" : "69"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

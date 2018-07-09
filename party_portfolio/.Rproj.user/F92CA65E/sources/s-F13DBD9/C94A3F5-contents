@@ -1,0 +1,136 @@
+### P1_current -- Get current season data
+library(nflscrapR)
+library(plyr)
+library(dplyr)
+library(randomForest)
+library(zoo)
+
+# # get up to date data
+
+# write.csv(pbp2017, "play_by_play_2017.csv",na="")
+pbp2017 <- season_play_by_play(2017)
+
+##### OFfensive Efficiency #####
+##### calculate 3rd down conversions
+# pbp2017$FirstDown # 0/1, whether a first down occurred
+# pbp2017$down # what down it was, filter to "3"
+# pbp2017$posTeam == team with ball
+# pbp2017$DefensiveTeam == defending team
+third_downs <- ddply(filter(pbp2017, down == 3), ~GameID+posteam, summarize, 
+                     thirddown_suc=length(which(FirstDown==1)), 
+                     thirddown_att=length(which(FirstDown==0)),
+                     thirddown_conv = thirddown_suc/(thirddown_att+thirddown_suc))
+third_downs$uid <- paste0(third_downs$GameID,".",third_downs$posteam)
+#### calculate red zone efficiency
+# pbp2017$Touchdown 0/1, whether touchdown occurred
+# pbp2017$yrdline100 == absolute position of where they are e.g. way to figure out if in redzone, <20 == red zone
+redzone <- ddply(filter(pbp2017, yrdline100 <= 20), ~GameID+posteam, summarize,
+                 redzone_success=length(which(Touchdown==1)),
+                 redzone_fail=length(which(Touchdown==0)),
+                 redzone_conv = redzone_success/(redzone_fail + redzone_success))
+redzone$uid <- paste0(redzone$GameID,".",redzone$posteam)
+
+#### calculate final score and win/loss
+finalscore <- ddply(filter(pbp2017), ~GameID+posteam, summarize, 
+                    score=max(PosTeamScore),
+                    other_score=max(DefTeamScore),
+                    win=ifelse(score > other_score, 1, 0))
+finalscore$uid <- paste0(finalscore$GameID,".",finalscore$posteam)
+
+## detNYG to test outcome results, everything seems to be doubled, not sure why everything is double counted...
+## boxscore: http://www.nfl.com/gamecenter017091800017/REG2/lions@giants#menu=gameinfo%7CcontentId%3A0ap3000000847931&tab=analyze&analyze=boxscore
+#detNYG <- read.csv("detNYG.csv")
+# 
+qb_efficiency <- ddply(pbp2017, ~GameID+posteam,summarize, 
+                       pe_a = (length(which(PassOutcome=="Complete"))/(sum(PassAttempt))-0.3) * 5,
+                       pe_b = ((sum(AirYards)/sum(PassAttempt))-3)*0.25,
+                       pe_c = (length(which(PassOutcome=="Complete" & Touchdown == 1))/sum(PassAttempt))*20,
+                       pe_d = 2.375 - (sum(InterceptionThrown)/sum(PassAttempt)*25),
+                       passer_rating = 100*((pe_a + pe_b + pe_c + pe_d)/6),
+                       completed_pass = length(which(PassOutcome=="Complete")),
+                       failed_pass = length(which(PassOutcome=="Incomplete Pass")),
+                       pass_completion_rate= completed_pass / (completed_pass+failed_pass),
+                       passing_yards = (sum(AirYards)),
+                       pass_ypa = passing_yards / length(which(PassOutcome=="Complete")),
+                       qb_interception = sum(InterceptionThrown))
+
+qb_efficiency <- arrange(qb_efficiency, desc(passer_rating)) %>% filter(!is.na(pass_ypa));qb_efficiency
+
+rush_efficiency <- ddply(filter(pbp2017, RushAttempt==1), ~GameID+posteam, summarize,
+                         rushing_yards = sum(Yards.Gained),
+                         rushing_attempts = length(RushAttempt),
+                         rush_ypc = rushing_yards / rushing_attempts);rush_efficiency
+
+##### pass protection - offensive line #####
+team_oline <- ddply(pbp2017, ~GameID+posteam, summarize,
+                         pp_sacks = sum(Sack),
+                         pp_plays = length(posteam[which(Accepted.Penalty != 1)]), # this seems to be too high still by around 20 plays, cut out penalty plays?
+                         pp_sack_rate_allowed = pp_sacks/pp_plays,
+                         pp_qbhits = sum(QBHit),
+                         pp_fumbles = sum(Fumble),
+                         pp_interceptions = sum(InterceptionThrown)); team_oline
+
+#### team gamescript behavior #### 
+gamescript <- plyr::ddply(pbp2017, 
+                          ~GameID+posteam, 
+                          summarize,
+                          script_trailing = 100*length(which(PosTeamScore < DefTeamScore))/length(posteam),
+                          script_leading = 100*length(which(PosTeamScore > DefTeamScore))/length(posteam),
+                          script_tied = 100*length(which(PosTeamScore == DefTeamScore))/length(posteam),
+                          script_trailing_passes = sum(PassAttempt[which(PosTeamScore < DefTeamScore & PassAttempt == 1)]),
+                          script_trailing_rushes = sum(RushAttempt[which(PosTeamScore < DefTeamScore & RushAttempt == 1)]),
+                          script_trailing_TD = sum(Touchdown[which(PosTeamScore < DefTeamScore & Touchdown == 1)]),
+                          script_leading_passes = sum(PassAttempt[which(PosTeamScore > DefTeamScore & PassAttempt == 1)]),
+                          script_leading_rushes = sum(RushAttempt[which(PosTeamScore > DefTeamScore & RushAttempt == 1)]),
+                          script_leading_TD = sum(Touchdown[which(PosTeamScore > DefTeamScore & Touchdown == 1)]),
+                          script_tied_passes = sum(PassAttempt[which(PosTeamScore == DefTeamScore & PassAttempt == 1)]),
+                          script_tied_rushes = sum(RushAttempt[which(PosTeamScore==DefTeamScore & RushAttempt == 1)]),
+                          script_tied_TD = sum(Touchdown[which(PosTeamScore== DefTeamScore & Touchdown == 1)]));head(gamescript)
+
+
+##### offense stats merge #####
+## https://stackoverflow.com/questions/14096814/merging-a-lot-of-data-frames
+third_downs$uid <- paste0(third_downs$GameID,".",third_downs$posteam)
+redzone$uid <- paste0(redzone$GameID,".",redzone$posteam)
+finalscore$uid <- paste0(finalscore$GameID,".",finalscore$posteam)
+qb_efficiency$uid <- paste0(qb_efficiency$GameID,".",qb_efficiency$posteam)
+rush_efficiency$uid <- paste0(rush_efficiency$GameID,".",rush_efficiency$posteam)
+## crazy function
+## https://stackoverflow.com/questions/14096814/merging-a-lot-of-data-frames
+offense_stats2017 <- Reduce(function(...) merge(..., all=TRUE), list(third_downs, redzone, finalscore, qb_efficiency, rush_efficiency, team_oline, gamescript))
+
+## remove weird blanks
+offense_stats2017 <- filter(offense_stats2017, posteam !="")
+
+#### merge offensive data ####
+offense_stats2017$win_cat <- as.factor(ifelse(offense_stats2017$win ==  1, "win", "loss"))
+
+#### defensive stats2017 ###
+defense_stats2017 <- ddply(pbp2017, ~GameID+DefensiveTeam, summarize,
+                           qbhits=sum(QBHit),
+                           # need to remove plays where there was a penalty / my numbers double espn...
+                           def_incomplete_pass=length(which(PassOutcome=="Incomplete Pass" & Accepted.Penalty != 1)),
+                           def_pass_yards_allowed=sum(AirYards[which(PassOutcome=="Complete")]),
+                           def_short_yards_allowed = sum(AirYards[which(AirYards<=15)]),
+                           def_deep_yards_allowed = sum(AirYards[which(AirYards>15)]),
+                           def_yac = sum(YardsAfterCatch),
+                           def_passing_ypa = def_pass_yards_allowed/length(which(PassAttempt==1)),
+                           def_passing_TD = sum(Touchdown[which(PassAttempt==1)]),
+                           def_interceptions=sum(InterceptionThrown),
+                           def_fumbles=sum(Fumble),
+                           def_total_turnovers = def_interceptions + def_fumbles,
+                           def_sacks = sum(Sack),
+                           def_rushing_yards_allowed = sum(Yards.Gained[which(RushAttempt==1)]),
+                           def_rush_ypc = def_rushing_yards_allowed/length(which(RushAttempt==1)),
+                           def_rushing_TD = sum(Touchdown[which(RushAttempt==1)]))
+
+defense_stats2017 <- arrange(defense_stats2017, GameID) %>% filter(!is.na(DefensiveTeam))
+defense_stats2017$uid <- paste0(defense_stats2017$GameID,".",defense_stats2017$DefensiveTeam)
+
+#### merge offensive and defensive stats ####
+combined_stats2017 <- merge(offense_stats2017, defense_stats2017)
+combined_stats2017$spread <- combined_stats2017$score - combined_stats2017$other_score
+
+## look at previous performance metrics, compare to game's outcome
+
+write.csv(combined_stats2017, "combined_stats2017.csv", na="")
